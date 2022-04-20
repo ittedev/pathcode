@@ -37,8 +37,7 @@ Path section may not exist or is empty string.
 ```json
 [
   {
-    "path": "",
-    "codes": ["Forbidden"]
+    "codes": "Forbidden"
   }
 ]
 ```
