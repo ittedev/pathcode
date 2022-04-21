@@ -1,15 +1,18 @@
-type PathCodeList = {
+type PathCode = {
   path: string
   code: string
+  params?: {
+    [key: string]: string
+  }
 }
 
 export class PathCodeError extends Error {
-  private pathCodes: Array<PathCodeList>
+  private pathCodes: Array<PathCode>
 
   constructor(code: string)
   constructor(path: string, code: string)
-  constructor(pathCodes: Array<PathCodeList>)
-  constructor(codeOrPath: string | Array<PathCodeList>, mayCode?: string) {
+  constructor(pathCodes: Array<PathCode>)
+  constructor(codeOrPath: string | Array<PathCode>, mayCode?: string) {
     super()
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, PathCodeError)
@@ -20,7 +23,7 @@ export class PathCodeError extends Error {
     if (Array.isArray(codeOrPath)) {
       this.pathCodes = codeOrPath
     } else {
-      this.pathCodes = new Array<PathCodeList>()
+      this.pathCodes = new Array<PathCode>()
 
       const path = mayCode ? codeOrPath : ''
       const code = mayCode ? mayCode : codeOrPath
@@ -40,6 +43,15 @@ export class PathCodeError extends Error {
     if (!pathCode) {
       this.pathCodes.push({ path, code })
     }
+  }
+
+  assign(error: PathCodeError, prefix?: number | string): void {
+    error.pathCodes.forEach(pathCode => {
+      this.pathCodes.push({
+        path: prefix + (pathCode.path ? '.' + pathCode.path : ''),
+        code: pathCode.code
+      })
+    })
   }
 
   toJSON() {
