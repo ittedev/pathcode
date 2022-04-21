@@ -75,6 +75,10 @@ export class PathCodeError extends Error {
     })
   }
 
+  get size() {
+    return this.pathCodes.length
+  }
+
   toJSON() {
     return this.pathCodes
   }
