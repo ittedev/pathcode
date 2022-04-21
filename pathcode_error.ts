@@ -1,19 +1,20 @@
 type PathCode = {
   path: string
   code: string
-  params?: Record<string, string>
+  params?: Record<string, string | number>
 }
 
 export class PathCodeError extends Error {
   private pathCodes: Array<PathCode>
 
-  constructor(code: string, params?: Record<string, string>)
-  constructor(path: string, code: string, params?: Record<string, string>)
+  constructor()
+  constructor(code: string, params?: Record<string, string | number>)
+  constructor(path: string, code: string, params?: Record<string, string | number>)
   constructor(pathCodes: Array<PathCode>)
   constructor(
-    codeOrPath: string | Array<PathCode>,
-    paramsOrCode?: string | Record<string, string>,
-    mayParams?: Record<string, string>
+    codeOrPath?: string | Array<PathCode>,
+    paramsOrCode?: string | Record<string, string | number>,
+    mayParams?: Record<string, string | number>
   )
   {
     super()
@@ -27,16 +28,18 @@ export class PathCodeError extends Error {
       this.pathCodes = codeOrPath
     } else {
       this.pathCodes = new Array<PathCode>()
-      this.add(codeOrPath, paramsOrCode as string, mayParams)
+      if (codeOrPath !== undefined) {
+        this.add(codeOrPath, paramsOrCode as string, mayParams)
+      }
     }
   }
 
-  add(code: string, params?: Record<string, string>): void
-  add(path: string, code: string, params?: Record<string, string>): void
+  add(code: string, params?: Record<string, string | number>): void
+  add(path: string, code: string, params?: Record<string, string | number>): void
   add(
     codeOrPath: string,
-    paramsOrCode?: string | Record<string, string>,
-    mayParams?: Record<string, string>
+    paramsOrCode?: string | Record<string, string | number>,
+    mayParams?: Record<string, string | number>
   ): void
   {
     const path = paramsOrCode && typeof paramsOrCode === 'string' ? codeOrPath : ''
