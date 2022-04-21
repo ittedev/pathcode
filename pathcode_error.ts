@@ -1,18 +1,21 @@
 type PathCode = {
   path: string
   code: string
-  params?: {
-    [key: string]: string
-  }
+  params?: Record<string, string>
 }
 
 export class PathCodeError extends Error {
   private pathCodes: Array<PathCode>
 
-  constructor(code: string)
-  constructor(path: string, code: string)
+  constructor(code: string, params?: Record<string, string>)
+  constructor(path: string, code: string, params?: Record<string, string>)
   constructor(pathCodes: Array<PathCode>)
-  constructor(codeOrPath: string | Array<PathCode>, mayCode?: string) {
+  constructor(
+    codeOrPath: string | Array<PathCode>,
+    paramsOrCode?: string | Record<string, string>,
+    mayParams?: Record<string, string>
+  )
+  {
     super()
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, PathCodeError)
@@ -24,33 +27,48 @@ export class PathCodeError extends Error {
       this.pathCodes = codeOrPath
     } else {
       this.pathCodes = new Array<PathCode>()
-
-      const path = mayCode ? codeOrPath : ''
-      const code = mayCode ? mayCode : codeOrPath
-      this.pathCodes.push({ path, code })
+      this.add(codeOrPath, paramsOrCode as string, mayParams)
     }
   }
 
-  add(code: string): void
-  add(path: string, code: string): void
-  add(codeOrPath: string, mayCode?: string): void {
-    const path = mayCode ? codeOrPath : ''
-    const code = mayCode ? mayCode : codeOrPath
+  add(code: string, params?: Record<string, string>): void
+  add(path: string, code: string, params?: Record<string, string>): void
+  add(
+    codeOrPath: string,
+    paramsOrCode?: string | Record<string, string>,
+    mayParams?: Record<string, string>
+  ): void
+  {
+    const path = paramsOrCode && typeof paramsOrCode === 'string' ? codeOrPath : ''
+    const code = paramsOrCode && typeof paramsOrCode === 'string' ? paramsOrCode : codeOrPath
+    const params = paramsOrCode && typeof paramsOrCode === 'object' ? paramsOrCode : mayParams || false
 
     const pathCode = this.pathCodes.find(
       pathCode => pathCode.path === path && pathCode.code === code
     )
-    if (!pathCode) {
-      this.pathCodes.push({ path, code })
+    if (pathCode) {
+      if (params) {
+        pathCode.params = params
+      }
+    } else {
+      const pathCode: PathCode = { path, code }
+      if (params) {
+        pathCode.params = params
+      }
+      this.pathCodes.push(pathCode)
     }
   }
 
   assign(error: PathCodeError, prefix?: number | string): void {
     error.pathCodes.forEach(pathCode => {
-      this.pathCodes.push({
+      const newpathCode: PathCode = {
         path: prefix + (pathCode.path ? '.' + pathCode.path : ''),
         code: pathCode.code
-      })
+      }
+      if (pathCode.params) {
+        newpathCode.params = { ...pathCode.params }
+      }
+      this.pathCodes.push(newpathCode)
     })
   }
 
