@@ -1,11 +1,17 @@
-type PathCode = {
+export type PathCode = {
   path: string
   code: string
   params?: Record<string, string | number>
 }
 
+export type CodeMessage = {
+  code: string,
+  message: string
+}
+
 export class PathCodeError extends Error {
   private pathCodes: Array<PathCode>
+  public codeMessages: Array<CodeMessage>
 
   constructor()
   constructor(code: string, params?: Record<string, string | number>)
@@ -23,6 +29,7 @@ export class PathCodeError extends Error {
     }
     Object.defineProperty(this, 'name', { value: 'PathCodeError' })
 
+    this.codeMessages = []
 
     if (Array.isArray(codeOrPath)) {
       this.pathCodes = codeOrPath
@@ -73,6 +80,23 @@ export class PathCodeError extends Error {
       }
       this.pathCodes.push(newpathCode)
     })
+  }
+
+  getMessages(...paths: Array<string | number>): Array<string> {
+    const path = paths.join('.')
+    return this.pathCodes
+      .filter(pathCode => pathCode.path === path)
+      .map(pathCode => {
+        const codeMessage = this.codeMessages.find(codeMessage => codeMessage.code === pathCode.code)
+        if (codeMessage) {
+          return codeMessage.message.replace(/{{\s*(\w+)\s*}}/g, (_match, p1) => {
+            const param = pathCode.params ? pathCode.params[p1] : undefined
+            return (param || '') + ''
+          })
+        } else {
+          return pathCode.code
+        }
+      })
   }
 
   get size() {
